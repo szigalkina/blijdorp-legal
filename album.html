@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>An album — Blijdorp</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Libre+Franklin:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --porcelain:#F5F0EA; --clay:#EAE2D7; --border:#DBD1C4;
+    --terracotta:#C9826B; --espresso:#403733; --stone:#7D736B; --bronze:#B08A63;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--porcelain); color:var(--espresso);
+    font:16px/1.65 "Libre Franklin",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  header{padding:56px 24px 8px; text-align:center}
+  .eyebrow{
+    font-size:11px; letter-spacing:2.4px; text-transform:uppercase;
+    color:var(--bronze); font-weight:500; margin:0 0 10px;
+  }
+  h1{
+    font-family:"Newsreader",Georgia,serif; font-weight:400;
+    font-size:clamp(32px,7vw,48px); letter-spacing:-.5px; margin:0;
+  }
+  .sub{color:var(--stone); margin:10px 0 0; font-size:14px}
+
+  main{max-width:640px; margin:0 auto; padding:28px 20px 80px}
+
+  .page{
+    background:var(--clay); border-radius:14px; padding:24px 22px 26px;
+    margin-bottom:22px; box-shadow:0 2px 14px rgba(64,55,51,.07);
+  }
+  .date{
+    text-align:center; font-size:10.5px; letter-spacing:2px;
+    text-transform:uppercase; color:var(--bronze); margin:0 0 16px;
+  }
+  .words{
+    font-family:"Newsreader",Georgia,serif; font-size:19px; line-height:1.5;
+    letter-spacing:-.2px; margin:0;
+  }
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:20px}
+  .grid.one{grid-template-columns:1fr}
+  .ph{
+    aspect-ratio:1/1; border-radius:8px; background:#ded5c8 center/cover no-repeat;
+  }
+
+  .state{text-align:center; color:var(--stone); padding:80px 24px}
+  .state h2{font-family:"Newsreader",serif; font-weight:400; color:var(--espresso); margin:0 0 8px}
+  footer{
+    text-align:center; color:var(--stone); font-size:12.5px;
+    padding:0 24px 60px;
+  }
+  footer a{color:var(--terracotta); text-decoration:none}
+
+  @media print{
+    body{background:#fff}
+    header{padding-top:0}
+    .page{break-inside:avoid; box-shadow:none; background:#fff; border:1px solid var(--border)}
+    footer{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header id="head" hidden>
+  <p class="eyebrow">A family album</p>
+  <h1 id="title"></h1>
+  <p class="sub" id="count"></p>
+</header>
+
+<main id="main">
+  <div class="state" id="loading"><h2>Opening the album…</h2></div>
+</main>
+
+<footer id="foot" hidden>
+  Shared privately from <a href="https://blijdorp.mom">Blijdorp</a>. Only people with this link can see it.
+</footer>
+
+<script>
+  const API = 'https://sconchqtopstqqmnvuez.supabase.co/functions/v1/album-share'
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+
+  const token = new URLSearchParams(location.search).get('t')
+  const main = document.getElementById('main')
+
+  const state = (title, body) => {
+    main.innerHTML = '<div class="state"><h2></h2><p></p></div>'
+    main.querySelector('h2').textContent = title
+    main.querySelector('p').textContent = body
+  }
+
+  // The owner picked a square frame for each photo; reproduce it exactly.
+  const frame = (el, photo) => {
+    el.style.backgroundImage = `url("${photo.url}")`
+    const c = photo.crop
+    if (!c || !c.w || !c.h) { el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; return }
+    el.style.backgroundSize = `${100 / c.w}% ${100 / c.h}%`
+    const px = c.w >= 1 ? 50 : (c.x / (1 - c.w)) * 100
+    const py = c.h >= 1 ? 50 : (c.y / (1 - c.h)) * 100
+    el.style.backgroundPosition = `${px}% ${py}%`
+  }
+
+  const render = (data) => {
+    document.getElementById('title').textContent = data.album.coverTitle || data.album.name
+    document.getElementById('count').textContent =
+      `${data.pages.length} ${data.pages.length === 1 ? 'page' : 'pages'}`
+    document.getElementById('head').hidden = false
+    document.getElementById('foot').hidden = false
+    document.title = `${data.album.name} — an album`
+
+    main.innerHTML = ''
+    for (const p of data.pages) {
+      const d = new Date(p.date)
+      const page = document.createElement('article')
+      page.className = 'page'
+
+      const date = document.createElement('p')
+      date.className = 'date'
+      date.textContent = `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`
+      page.appendChild(date)
+
+      if (p.summary) {
+        const words = document.createElement('p')
+        words.className = 'words'
+        words.textContent = p.summary
+        page.appendChild(words)
+      }
+
+      if (p.photos.length) {
+        const grid = document.createElement('div')
+        grid.className = p.photos.length === 1 ? 'grid one' : 'grid'
+        for (const photo of p.photos) {
+          const cell = document.createElement('div')
+          cell.className = 'ph'
+          frame(cell, photo)
+          grid.appendChild(cell)
+        }
+        page.appendChild(grid)
+      }
+      main.appendChild(page)
+    }
+
+    if (!data.pages.length) {
+      state('No pages yet', 'This album is still empty — check back soon.')
+    }
+  }
+
+  if (!token) {
+    state('This link is incomplete', 'Ask for the album link again — part of it is missing.')
+  } else {
+    fetch(`${API}?t=${encodeURIComponent(token)}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then(render)
+      .catch((code) => {
+        if (code === 404) state('This link is no longer active', 'The album owner turned it off. Ask her for a new link.')
+        else state('Could not open the album', 'Please try again in a moment.')
+      })
+  }
+</script>
+</body>
+</html>
