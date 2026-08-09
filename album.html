@@ -50,6 +50,32 @@
     aspect-ratio:1/1; border-radius:8px; background:#ded5c8 center/cover no-repeat;
   }
 
+  /* Fullscreen photo — pinch to zoom, drag to move, tap to close
+     (founder, 2026-08-09: the same as in the app). */
+  .lb{
+    position:fixed; inset:0; background:#241f1c; display:none;
+    align-items:center; justify-content:center; overflow:hidden;
+    touch-action:none; z-index:10;
+  }
+  .lb.open{display:flex}
+  .lb img{
+    max-width:100%; max-height:100%; transform-origin:0 0;
+    will-change:transform; user-select:none; -webkit-user-drag:none;
+  }
+  .lb .close{
+    position:absolute; top:16px; right:18px; width:40px; height:40px;
+    border:0; border-radius:50%; background:rgba(255,255,255,.14); color:#fff;
+    font-size:20px; line-height:1; cursor:pointer;
+  }
+  .lb .count{
+    position:absolute; bottom:22px; left:0; right:0; text-align:center;
+    color:rgba(255,255,255,.75); font-size:12px; letter-spacing:1.5px;
+  }
+  .lb .hint{
+    position:absolute; top:22px; left:0; right:0; text-align:center;
+    color:rgba(255,255,255,.5); font-size:12px;
+  }
+
   .state{text-align:center; color:var(--stone); padding:80px 24px}
   .state h2{font-family:"Newsreader",serif; font-weight:400; color:var(--espresso); margin:0 0 8px}
   footer{
@@ -77,6 +103,13 @@
 <main id="main">
   <div class="state" id="loading"><h2>Opening the album…</h2></div>
 </main>
+
+<div class="lb" id="lb" aria-hidden="true">
+  <img id="lbimg" alt="">
+  <button class="close" id="lbclose" aria-label="Close">&times;</button>
+  <p class="hint">Pinch to zoom · tap to close</p>
+  <p class="count" id="lbcount"></p>
+</div>
 
 <footer id="foot" hidden>
   Shared privately from <a href="https://blijdorp.mom">Blijdorp</a>. Only people with this link can see it.
@@ -135,12 +168,19 @@
       if (p.photos.length) {
         const grid = document.createElement('div')
         grid.className = p.photos.length === 1 ? 'grid one' : 'grid'
-        for (const photo of p.photos) {
+        p.photos.forEach((photo, i) => {
           const cell = document.createElement('div')
           cell.className = 'ph'
+          cell.setAttribute('role', 'button')
+          cell.setAttribute('tabindex', '0')
           frame(cell, photo)
+          const open = () => openLightbox(p.photos.map((x) => x.url), i)
+          cell.addEventListener('click', open)
+          cell.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open() }
+          })
           grid.appendChild(cell)
-        }
+        })
         page.appendChild(grid)
       }
       main.appendChild(page)
@@ -150,6 +190,110 @@
       state('No pages yet', 'This album is still empty — check back soon.')
     }
   }
+
+  // ── Fullscreen photo: pinch to zoom, drag to move (founder, 2026-08-09) ──
+  const lb = document.getElementById('lb')
+  const lbimg = document.getElementById('lbimg')
+  const lbcount = document.getElementById('lbcount')
+  let shots = [], shot = 0
+  let scale = 1, tx = 0, ty = 0
+  // Where the picture sits with no transform applied — zooming has to anchor
+  // against THIS, not the page origin, or the image drifts under the fingers.
+  let lay = { x: 0, y: 0 }
+  const pointers = new Map()
+  let startDist = 0, startScale = 1, startMid = { x: 0, y: 0 }, startT = { x: 0, y: 0 }
+  let moved = false
+
+  const draw = () => {
+    lbimg.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`
+  }
+  const resetView = () => { scale = 1; tx = 0; ty = 0; draw() }
+
+  const openLightbox = (urls, i) => {
+    shots = urls; shot = i
+    lbimg.src = shots[shot]
+    lbcount.textContent = shots.length > 1 ? `${shot + 1} / ${shots.length}` : ''
+    resetView()
+    lb.classList.add('open')
+    lb.setAttribute('aria-hidden', 'false')
+    document.body.style.overflow = 'hidden'
+    // Read the untransformed position once the picture is laid out.
+    const measure = () => {
+      const r = lbimg.getBoundingClientRect()
+      lay = { x: r.left, y: r.top }
+    }
+    lbimg.complete ? measure() : lbimg.addEventListener('load', measure, { once: true })
+    requestAnimationFrame(measure)
+  }
+  const closeLightbox = () => {
+    lb.classList.remove('open')
+    lb.setAttribute('aria-hidden', 'true')
+    document.body.style.overflow = ''
+  }
+  document.getElementById('lbclose').addEventListener('click', (e) => {
+    e.stopPropagation(); closeLightbox()
+  })
+
+  const mid = () => {
+    const [a, b] = [...pointers.values()]
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+  }
+  const dist = () => {
+    const [a, b] = [...pointers.values()]
+    return Math.hypot(a.x - b.x, a.y - b.y)
+  }
+
+  lb.addEventListener('pointerdown', (e) => {
+    lb.setPointerCapture(e.pointerId)
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    moved = false
+    if (pointers.size === 2) {
+      startDist = dist(); startScale = scale; startMid = mid(); startT = { x: tx, y: ty }
+    } else {
+      startMid = { x: e.clientX, y: e.clientY }; startT = { x: tx, y: ty }
+    }
+  })
+
+  lb.addEventListener('pointermove', (e) => {
+    if (!pointers.has(e.pointerId)) return
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (pointers.size === 2 && startDist > 0) {
+      moved = true
+      const next = Math.min(5, Math.max(1, (dist() / startDist) * startScale))
+      const m = mid()
+      // The picture point that was under the fingers stays under them.
+      const px = (startMid.x - lay.x - startT.x) / startScale
+      const py = (startMid.y - lay.y - startT.y) / startScale
+      tx = m.x - lay.x - px * next
+      ty = m.y - lay.y - py * next
+      scale = next
+      draw()
+    } else if (pointers.size === 1 && scale > 1) {
+      moved = true
+      tx = startT.x + (e.clientX - startMid.x)
+      ty = startT.y + (e.clientY - startMid.y)
+      draw()
+    }
+  })
+
+  const endPointer = (e) => {
+    pointers.delete(e.pointerId)
+    if (pointers.size < 2) startDist = 0
+    if (pointers.size === 0) {
+      if (!moved) {
+        // A plain tap: zoomed in, snap back; otherwise close.
+        if (scale > 1.01) resetView()
+        else closeLightbox()
+      }
+      if (scale <= 1.01) { tx = 0; ty = 0; scale = 1; draw() }
+    }
+  }
+  lb.addEventListener('pointerup', endPointer)
+  lb.addEventListener('pointercancel', endPointer)
+  lb.addEventListener('dblclick', () => { scale > 1.01 ? resetView() : (scale = 2.5, draw()) })
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && lb.classList.contains('open')) closeLightbox()
+  })
 
   if (!token) {
     state('This link is incomplete', 'Ask for the album link again — part of it is missing.')
