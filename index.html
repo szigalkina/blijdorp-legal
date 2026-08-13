@@ -3,24 +3,188 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Blijdorp — legal</title>
+<title>Blijdorp — the neighbourhood app for mothers</title>
+<meta name="description" content="Meet the mothers a few streets away, and keep your child's moments by voice. Invite-only, made in Rotterdam.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Libre+Franklin:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Libre+Franklin:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root{--porcelain:#F5F0EA;--border:#DBD1C4;--terracotta:#C46B55;--espresso:#2E2A27;--stone:#756E66}
-  body{margin:0;background:var(--porcelain);color:var(--espresso);font:16px/1.65 "Libre Franklin",sans-serif;display:grid;place-items:center;min-height:100vh}
-  main{text-align:center;padding:24px}
-  h1{font-family:"Newsreader",serif;font-weight:600;font-size:40px;margin:0 0 4px}
-  p{color:var(--stone);margin:0 0 24px}
-  a{display:block;color:var(--terracotta);font-weight:500;margin:10px 0;font-size:18px}
+  :root{
+    --porcelain:#F5F0EA; --clay:#EAE2D7; --border:#DBD1C4;
+    --terracotta:#C9826B; --terracotta-dark:#B06A54;
+    --espresso:#403733; --stone:#7D736B; --bronze:#B08A63;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:
+      radial-gradient(120% 50% at 50% -8%, #FBF7F2 0%, var(--porcelain) 60%),
+      var(--porcelain);
+    color:var(--espresso);
+    font:17px/1.65 "Libre Franklin",sans-serif;
+  }
+  .wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+
+  header{display:flex;align-items:center;justify-content:space-between;padding:26px 0}
+  /* The wordmark matches the logo lettering — a high-contrast Didone — not the
+     Newsreader the rest of the page reads in. */
+  .wordmark{font-family:"Bodoni Moda",serif;font-weight:500;font-size:26px;letter-spacing:.2px;color:var(--espresso);text-decoration:none}
+  .nav a{color:var(--stone);text-decoration:none;font-size:15px;margin-left:22px}
+  .nav a.cta{color:var(--terracotta);font-weight:500}
+
+  .hero{text-align:center;padding:64px 0 30px}
+  .eyebrow{font-size:13px;letter-spacing:4px;text-transform:uppercase;color:var(--bronze);font-weight:500;margin-bottom:18px}
+  h1{font-family:"Newsreader",serif;font-weight:400;font-size:clamp(38px,6.5vw,64px);line-height:1.08;letter-spacing:-1.2px;max-width:760px;margin:0 auto}
+  h1 em{font-style:italic;color:var(--terracotta)}
+  .sub{color:var(--stone);max-width:560px;margin:22px auto 0;font-size:19px}
+  .hero-actions{margin-top:32px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .btn{display:inline-block;border-radius:999px;padding:14px 30px;font-size:16px;font-weight:500;text-decoration:none}
+  .btn-primary{background:var(--terracotta);color:#fff;box-shadow:0 10px 26px rgba(201,130,107,.35)}
+  .btn-primary:hover{background:var(--terracotta-dark)}
+  .btn-quiet{color:var(--espresso);background:var(--clay)}
+  .hero-note{margin-top:14px;font-size:14px;color:var(--stone)}
+
+  section.row{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;padding:64px 0}
+  section.row.flip .txt{order:2}
+  section.row.flip .art{order:1}
+  .row h2{font-family:"Newsreader",serif;font-weight:400;font-size:clamp(30px,4vw,42px);line-height:1.12;letter-spacing:-.6px;margin-bottom:16px}
+  .row h2 em{font-style:italic;color:var(--terracotta)}
+  .row p{color:var(--stone);margin-bottom:14px}
+  .row .kicker{font-size:12px;letter-spacing:3.5px;text-transform:uppercase;color:var(--bronze);font-weight:500;margin-bottom:12px}
+  .art img{width:100%;height:auto;border-radius:22px;box-shadow:0 30px 70px rgba(64,55,51,.16);display:block}
+
+  .invite{background:var(--clay);border-radius:28px;padding:54px 40px;margin:40px 0 80px;text-align:center}
+  .invite h2{font-family:"Newsreader",serif;font-weight:400;font-size:clamp(28px,4vw,40px);letter-spacing:-.6px;margin-bottom:12px}
+  .invite p{color:var(--stone);max-width:520px;margin:0 auto 8px}
+  form{max-width:440px;margin:28px auto 0;text-align:left}
+  label{display:block;font-size:13px;letter-spacing:.4px;color:var(--stone);margin:16px 0 6px}
+  input,textarea{
+    width:100%;border:1px solid var(--border);border-radius:14px;background:var(--porcelain);
+    padding:13px 16px;font:16px "Libre Franklin",sans-serif;color:var(--espresso);
+  }
+  input:focus,textarea:focus{outline:2px solid var(--terracotta);outline-offset:1px;border-color:transparent}
+  textarea{min-height:88px;resize:vertical}
+  .hp{position:absolute;left:-9999px;top:-9999px}
+  button{
+    margin-top:22px;width:100%;border:0;cursor:pointer;
+    background:var(--terracotta);color:#fff;border-radius:999px;padding:15px;
+    font:500 17px "Libre Franklin",sans-serif;
+  }
+  button:hover{background:var(--terracotta-dark)}
+  button:disabled{opacity:.6;cursor:default}
+  .thanks{display:none;font-family:"Newsreader",serif;font-size:24px;margin-top:26px}
+  .err{display:none;color:var(--terracotta-dark);font-size:14px;margin-top:12px}
+
+  footer{border-top:1px solid var(--border);padding:30px 0 46px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;color:var(--stone);font-size:14px}
+  footer a{color:var(--stone)}
+
+  @media (max-width:760px){
+    section.row{grid-template-columns:1fr;gap:30px;padding:44px 0}
+    section.row.flip .txt{order:1}
+    section.row.flip .art{order:2}
+    .nav a:not(.cta){display:none}
+  }
 </style>
 </head>
 <body>
-<main>
-  <h1>Blijdorp</h1>
-  <p>Your village lives closer than you think.</p>
-  <a href="privacy.html">Privacy Policy</a>
-  <a href="terms.html">Terms of Use</a>
-</main>
+<div class="wrap">
+
+  <header>
+    <a class="wordmark" href="/">Blijdorp</a>
+    <nav class="nav">
+      <a href="https://apps.apple.com/nl/app/blijdorp/id6786826361">App&nbsp;Store</a>
+      <a class="cta" href="#invite">Get an invite</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <div class="eyebrow">For mothers in Rotterdam</div>
+    <h1>Your village lives <em>closer</em> than you think</h1>
+    <p class="sub">Meet the mothers a few streets away — and keep what your child did today, just by saying it out loud.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="#invite">Get an invite</a>
+      <a class="btn btn-quiet" href="https://apps.apple.com/nl/app/blijdorp/id6786826361">Already invited? App&nbsp;Store</a>
+    </div>
+    <p class="hero-note">iPhone only for now · free · no ads</p>
+  </div>
+
+  <section class="row">
+    <div class="txt">
+      <div class="kicker">Meet moms</div>
+      <h2>The park is full of mothers. <em>Nobody speaks.</em></h2>
+      <p>Maternity leave can be the loneliest year of your life — never alone, and never with anyone. Blijdorp shows you the mothers in your own neighbourhood, by area, never an exact address.</p>
+      <p>Post an open invitation — “walking at eleven, join if you’re free” — and whoever is free says yes. Once you’ve actually met, the app gets out of the way.</p>
+    </div>
+    <div class="art"><img src="assets/meet.png" alt="The Blijdorp map: mothers nearby shown by neighbourhood, and an open invitation for a stroller walk in the Vroesenpark" loading="lazy"></div>
+  </section>
+
+  <section class="row flip">
+    <div class="txt">
+      <div class="kicker">Kids journal</div>
+      <h2>You never had time for <em>the notebook</em></h2>
+      <p>So talk instead. Ten seconds, one hand, any language — a first step, how she’s sleeping this week, what you did this summer. It becomes a written page with the date already on it.</p>
+      <p>Add the photos that belong with the day, and every entry becomes a page in her album. Your journal is private: nobody on the map can ever see it.</p>
+    </div>
+    <div class="art"><img src="assets/journal.png" alt="The journal recorder: one large record button and the question “What made your child laugh today?”" loading="lazy"></div>
+  </section>
+
+  <section class="row">
+    <div class="txt">
+      <div class="kicker">The album</div>
+      <h2>And one day, <em>a real book</em></h2>
+      <p>Flip through the album like a book. Share it with grandparents by a single link — they read it in their browser, no app, no account, and you can turn the link off whenever you like.</p>
+      <p>When the year is full, export it as a print-ready PDF. Square pages, one memory each. The year on a shelf instead of on a phone.</p>
+    </div>
+    <div class="art"><img src="assets/album.png" alt="Printed album pages: dated entries with square photos, stacked as loose printed sheets" loading="lazy"></div>
+  </section>
+
+  <section class="invite" id="invite">
+    <h2>Blijdorp works by invitation</h2>
+    <p>Real names, real neighbours — that’s the whole point. If you know a member, ask her for a code. If you don’t, leave your name and I’ll send you one myself.</p>
+    <form id="f">
+      <label for="name">Your first name</label>
+      <input id="name" name="name" required maxlength="80" autocomplete="given-name">
+      <label for="contact">Where can I reach you? (email or phone)</label>
+      <input id="contact" name="contact" required maxlength="160" autocomplete="email">
+      <label for="note">Anything you’d like to add <span style="color:var(--bronze)">— optional</span></label>
+      <textarea id="note" name="note" maxlength="1000" placeholder="Which neighbourhood you’re in, due date, how you found us…"></textarea>
+      <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <button type="submit" id="send">Ask for an invite</button>
+      <p class="err" id="err">That didn’t go through — please try once more.</p>
+    </form>
+    <p class="thanks" id="thanks">Thank you — I’ll be in touch soon. 🤍</p>
+  </section>
+
+  <footer>
+    <span>Made in Rotterdam, by a mother.</span>
+    <span><a href="https://apps.apple.com/nl/app/blijdorp/id6786826361">Download</a> · <a href="support.html">Support</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></span>
+  </footer>
+
+</div>
+
+<script>
+  const f = document.getElementById('f')
+  f.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const btn = document.getElementById('send')
+    btn.disabled = true; btn.textContent = 'Sending…'
+    document.getElementById('err').style.display = 'none'
+    try {
+      const res = await fetch('https://sconchqtopstqqmnvuez.supabase.co/functions/v1/invite-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: f.name.value, contact: f.contact.value,
+          note: f.note.value, website: f.website.value,
+        }),
+      })
+      if (!res.ok) throw new Error()
+      f.style.display = 'none'
+      document.getElementById('thanks').style.display = 'block'
+    } catch {
+      document.getElementById('err').style.display = 'block'
+      btn.disabled = false; btn.textContent = 'Ask for an invite'
+    }
+  })
+</script>
 </body>
 </html>
