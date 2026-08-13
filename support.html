@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blijdorp — support</title>
+<meta name="description" content="Write to Blijdorp support — questions about the app, your account, or a shared album.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Libre+Franklin:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --porcelain:#F5F0EA; --clay:#EAE2D7; --border:#DBD1C4;
+    --terracotta:#C9826B; --terracotta-dark:#B06A54;
+    --espresso:#403733; --stone:#7D736B; --bronze:#B08A63;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(120% 50% at 50% -8%, #FBF7F2 0%, var(--porcelain) 60%),
+      var(--porcelain);
+    color:var(--espresso);
+    font:17px/1.65 "Libre Franklin",sans-serif;
+    min-height:100vh;
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:0 24px}
+  header{display:flex;align-items:center;justify-content:space-between;padding:26px 0}
+  /* The wordmark matches the logo lettering — a high-contrast Didone — not the
+     Newsreader the rest of the page reads in. */
+  .wordmark{font-family:"Bodoni Moda",serif;font-weight:500;font-size:26px;letter-spacing:.2px;color:var(--espresso);text-decoration:none}
+  .nav a{color:var(--stone);text-decoration:none;font-size:15px}
+
+  .card{background:var(--clay);border-radius:28px;padding:44px 36px;margin:36px 0 60px}
+  h1{font-family:"Newsreader",serif;font-weight:400;font-size:clamp(30px,5vw,40px);letter-spacing:-.6px;margin-bottom:10px}
+  .lede{color:var(--stone);margin-bottom:6px}
+  .lede-small{color:var(--stone);font-size:14px}
+
+  label{display:block;font-size:13px;letter-spacing:.4px;color:var(--stone);margin:18px 0 6px}
+  input,textarea{
+    width:100%;border:1px solid var(--border);border-radius:14px;background:var(--porcelain);
+    padding:13px 16px;font:16px "Libre Franklin",sans-serif;color:var(--espresso);
+  }
+  input:focus,textarea:focus{outline:2px solid var(--terracotta);outline-offset:1px;border-color:transparent}
+  textarea{min-height:160px;resize:vertical}
+  .hp{position:absolute;left:-9999px;top:-9999px}
+  button{
+    margin-top:24px;width:100%;border:0;cursor:pointer;
+    background:var(--terracotta);color:#fff;border-radius:999px;padding:15px;
+    font:500 17px "Libre Franklin",sans-serif;
+  }
+  button:hover{background:var(--terracotta-dark)}
+  button:disabled{opacity:.6;cursor:default}
+  .thanks{display:none;font-family:"Newsreader",serif;font-size:24px;margin-top:26px;text-align:center}
+  .err{display:none;color:var(--terracotta-dark);font-size:14px;margin-top:12px}
+
+  footer{border-top:1px solid var(--border);padding:26px 0 44px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;color:var(--stone);font-size:14px}
+  footer a{color:var(--stone)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <a class="wordmark" href="/">Blijdorp</a>
+    <nav class="nav"><a href="/">← Back to the app</a></nav>
+  </header>
+
+  <div class="card">
+    <h1>Write to support</h1>
+    <p class="lede">A question about the app, your account, or an album someone shared with you — it all lands with a person, not a ticket queue.</p>
+    <p class="lede-small">Using the app already? Me → Contact support reaches the same place and knows who you are.</p>
+
+    <form id="f">
+      <label for="subject">What is it about?</label>
+      <input id="subject" name="subject" required maxlength="120">
+      <label for="body">Your message</label>
+      <textarea id="body" name="body" required maxlength="4000"></textarea>
+      <label for="from">Your email or phone <span style="color:var(--bronze)">— so I can answer you</span></label>
+      <input id="from" name="from" maxlength="160" autocomplete="email">
+      <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <button type="submit" id="send">Send</button>
+      <p class="err" id="err">That didn’t go through — please try once more.</p>
+    </form>
+    <p class="thanks" id="thanks">Sent — I’ll get back to you soon. 🤍</p>
+  </div>
+
+  <footer>
+    <span>Made in Rotterdam, by a mother.</span>
+    <span><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></span>
+  </footer>
+
+</div>
+
+<script>
+  const f = document.getElementById('f')
+  f.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const btn = document.getElementById('send')
+    btn.disabled = true; btn.textContent = 'Sending…'
+    document.getElementById('err').style.display = 'none'
+    try {
+      const res = await fetch('https://sconchqtopstqqmnvuez.supabase.co/functions/v1/web-support', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject: f.subject.value, body: f.body.value,
+          from: f.from.value, website: f.website.value,
+        }),
+      })
+      if (!res.ok) throw new Error()
+      f.style.display = 'none'
+      document.getElementById('thanks').style.display = 'block'
+    } catch {
+      document.getElementById('err').style.display = 'block'
+      btn.disabled = false; btn.textContent = 'Send'
+    }
+  })
+</script>
+</body>
+</html>
